@@ -26,3 +26,18 @@ outputs/
 # Logs / cache
 *.log
 .cache/
+
+# Electron build artifacts
+resources/
+**/resources/
+app.asar
+**/*.asar
+release/
+releases/
+dist/
+out/
+build/
+
+# Binaries
+*.exe
+
