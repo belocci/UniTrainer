@@ -1,0 +1,115 @@
+{
+  "name": "uni-trainer",
+  "version": "1.0.0",
+  "description": "Uni Trainer - AI Training Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-packager . \"Uni Trainer\" --platform=win32 --arch=x64 --out=\"./build-output\" --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$|^/resources$|^/node_modules/electron-packager$|^/node_modules/electron-builder$|^/installer$\" --icon=build/icon.ico && node copy-python-to-build.js && node move-build-to-unimain.js",
+    "build:components": "npm run build:win && node scripts/package-components.js",
+    "build:installer": "cd installer && npm install && npm run build",
+    "build:win:installer": "electron-builder --win",
+    "build:mac": "electron-packager . \"Uni Trainer\" --platform=darwin --arch=x64,arm64 --out=dist --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$\" --icon=build/icon.icns",
+    "build:all": "npm run build:win && npm run build:mac",
+    "build:watch": "chokidar \"*.js\" \"*.html\" \"*.css\" \"*.py\" -c \"npm run build:win\" --initial",
+    "generate-icons": "node generate-icons.js"
+  },
+  "keywords": [
+    "ai",
+    "training",
+    "gpu",
+    "machine-learning"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "ssh2": "^1.17.0",
+    "systeminformation": "^5.21.20"
+  },
+  "devDependencies": {
+    "adm-zip": "^0.5.16",
+    "chokidar-cli": "^3.0.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
+    "sharp": "^0.34.5",
+    "to-ico": "^1.1.5"
+  },
+  "build": {
+    "appId": "com.unitrainer.app",
+    "productName": "Uni Trainer",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "*.js",
+      "*.html",
+      "*.css",
+      "node_modules/systeminformation/**/*",
+      "node_modules/archiver/**/*",
+      "node_modules/ssh2/**/*",
+      "node_modules/archiver-utils/**/*",
+      "node_modules/compress-commons/**/*",
+      "node_modules/readable-stream/**/*",
+      "node_modules/tar-stream/**/*",
+      "node_modules/zip-stream/**/*",
+      "node_modules/async/**/*",
+      "node_modules/lazystream/**/*",
+      "node_modules/lodash/**/*",
+      "!node_modules/electron/**/*",
+      "!dist/**/*",
+      "!build/**/*",
+      "!.git/**/*",
+      "python/**/*",
+      "*.py"
+    ],
+    "win": {
+      "target": "dir",
+      "sign": false,
+      "verifyUpdateCodeSignature": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 410,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 150,
+          "type": "file"
+        }
+      ]
+    }
+  }
+}

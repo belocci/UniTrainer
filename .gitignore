@@ -1,0 +1,28 @@
+﻿# Node / Electron
+node_modules/
+dist/
+build/
+out/
+
+# Binaries
+*.exe
+
+# Python / ML
+.venv/
+__pycache__/
+*.pt
+*.pth
+*.onnx
+*.ckpt
+
+# Data / outputs
+data/
+datasets/
+models/
+runs/
+outputs/
+*.csv
+
+# Logs / cache
+*.log
+.cache/

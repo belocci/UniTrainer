@@ -1,0 +1,440 @@
+/*
+V2 Theme Overrides - Uni Trainer
+Light, modern UI with tokenized variables
+*/
+
+:root {
+    --bg-app: #F6F7F9;
+    --bg-card: #FFFFFF;
+    --border-subtle: #E6E8EC;
+    --text-primary: #1F2937;
+    --text-muted: #6B7280;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --danger: #DC2626;
+    --danger-hover: #B91C1C;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-soft: 0 6px 20px rgba(16, 24, 40, 0.08);
+    --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+    /* Back-compat aliases */
+    --bg: var(--bg-app);
+    --card: var(--bg-card);
+    --border: var(--border-subtle);
+    --text: var(--text-primary);
+    --muted: var(--text-muted);
+    --primary: var(--accent);
+    --primary-hover: var(--accent-hover);
+}
+
+body {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font);
+}
+
+.app-container {
+    background: var(--bg-app);
+}
+
+.left-panel,
+.right-panel {
+    background: var(--bg-app);
+}
+
+.card,
+.data-section.card,
+.schema-review-section.card,
+.train-settings.card,
+.network-visualization.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-xs);
+}
+
+.left-panel .card {
+    margin-bottom: var(--space-4);
+}
+
+.right-panel .card {
+    margin-bottom: var(--space-4);
+}
+
+.card h2,
+.data-section h2 {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-subtle);
+    letter-spacing: 0;
+    font-weight: 600;
+}
+
+.btn {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-primary);
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.btn-danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: var(--danger-hover);
+    border-color: var(--danger-hover);
+}
+
+.btn-secondary {
+    background: transparent;
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-muted);
+}
+
+/* Button hierarchy via IDs */
+#stopTrainingBtn,
+#trainNewModelBtn {
+    border-color: var(--border-subtle);
+    background: transparent;
+    color: var(--text-primary);
+}
+
+#applyManualBtn {
+    background: transparent;
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
+}
+
+#applyManualBtn:hover:not(:disabled) {
+    background: #EEF2FF;
+    border-color: #C7D2FE;
+}
+
+#testGpuBtn,
+#testCpuBtn {
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-color: transparent;
+    background: transparent;
+}
+
+#testGpuBtn:hover:not(:disabled),
+#testCpuBtn:hover:not(:disabled) {
+    background: #EEF2FF;
+    color: var(--text-primary);
+}
+
+.neural-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.metrics-tabs {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.metric-tab {
+    color: var(--text-muted);
+    letter-spacing: 0.6px;
+}
+
+.metric-tab:hover {
+    background: #EEF2FF;
+    color: var(--text-primary);
+}
+
+.metric-tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent);
+}
+
+.training-status-indicator {
+    background: #FFFFFF;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+}
+
+.metric-label,
+.metric-label-small,
+.north-star-metric .metric-label {
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.metric-value,
+.metric-value-small,
+.north-star-metric .metric-value {
+    color: var(--text-primary);
+}
+
+.output-container {
+    background: #F1F5F9;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+    min-height: 140px;
+    opacity: 0.9;
+}
+
+.output {
+    font-family: var(--mono);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-size: 11.5px;
+}
+
+/* Main training empty state */
+.visualization-container {
+    background: var(--bg-app);
+}
+
+.visualization-container::before {
+    content: "";
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    border: 1px solid var(--border-subtle);
+    background: #FFFFFF;
+    box-shadow: var(--shadow-xs);
+    top: 46%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+.visualization-container::after {
+    content: "Ready to train\A Configure your model and click Start Training";
+    white-space: pre;
+    position: absolute;
+    top: calc(46% + 54px);
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.9;
+    line-height: 1.5;
+    pointer-events: none;
+}
+
+/* Header clarity */
+.neural-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.6px;
+}
+
+.north-star-metric .metric-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: 0.4px;
+}
+
+.north-star-metric .metric-value {
+    color: var(--text-primary);
+}
+
+/* Training controls hierarchy */
+.training-section .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+}
+
+.training-section .controls #startTrainingBtn {
+    width: 100%;
+    font-size: 13px;
+    padding: 12px 16px;
+    order: 1;
+}
+
+.training-section .controls #testGpuBtn,
+.training-section .controls #testCpuBtn {
+    align-self: flex-start;
+    order: 2;
+}
+
+.training-section .controls #stopTrainingBtn,
+.training-section .controls #trainNewModelBtn {
+    align-self: flex-start;
+    order: 3;
+}
+
+#stopTrainingBtn:disabled {
+    display: none;
+}
+
+.training-section .controls #terminateInstanceBtn {
+    align-self: flex-start;
+    margin-left: 0 !important;
+    opacity: 0.7;
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+    order: 4;
+    margin-top: var(--space-2);
+}
+
+.training-section .controls #terminateInstanceBtn:hover:not(:disabled) {
+    opacity: 1;
+    color: #FFFFFF;
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+/* Empty state for logs */
+.output:empty::before {
+    content: "Ready to train";
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    text-align: center;
+    margin-top: var(--space-3);
+}
+
+.output:empty::after {
+    content: "Configure settings and start training";
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: var(--space-1);
+}
+
+/* Resources panel */
+.monitor-item {
+    padding: 6px 0;
+}
+
+.monitor-label {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.progress-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: #EEF2F7;
+}
+
+.progress-fill {
+    border-radius: 999px;
+}
+
+/* Load Model list styling */
+.model-browser {
+    gap: var(--space-3);
+}
+
+.models-list {
+    gap: var(--space-2);
+}
+
+.model-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-xs);
+}
+
+.model-item:hover {
+    background: #F9FAFB;
+    border-color: #D7DBE2;
+}
+
+.model-item-name {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.model-item-info {
+    color: var(--text-muted);
+}
+
+.model-item-empty {
+    color: var(--text-muted);
+    font-style: normal;
+}
+
+.model-path {
+    background: #F9FAFB;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+}
+
+.model-label {
+    color: var(--text-muted);
+    letter-spacing: 0.6px;
+}
+
+.model-path-text {
+    color: var(--text-primary);
+}
+
+input,
+select,
+textarea {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: #FFFFFF;
+    color: var(--text-primary);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #93C5FD;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Slider */
+input[type="range"] {
+    accent-color: var(--primary);
+}
+
+/* Reduce heavy outlines */
+.training-mode-card,
+.feature-tag,
+.privacy-notice {
+    border-radius: var(--radius-sm);
+    border-color: var(--border);
+}
