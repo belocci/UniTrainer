@@ -1,18 +1,20 @@
-﻿# Node / Electron
+# Node / Electron
 node_modules/
 dist/
 build/
 out/
 release/
+build-output/
+releases/
+python/
+
+*.zip
 
 # Binaries
 *.exe
 *.dll
 *.pak
 *.bin
-
-# Allow releases artifacts
-!releases/**/*
 
 # Python / ML
 .venv/
@@ -42,4 +44,3 @@ resources/
 **/resources/
 app.asar
 **/*.asar
-releases/
