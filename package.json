@@ -2,19 +2,19 @@
   "name": "uni-trainer",
   "version": "1.0.0",
   "description": "Uni Trainer - AI Training Desktop Application",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
     "build": "electron-builder",
-    "build:win": "electron-packager . \"Uni Trainer\" --platform=win32 --arch=x64 --out=\"./build-output\" --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$|^/resources$|^/node_modules/electron-packager$|^/node_modules/electron-builder$|^/installer$\" --icon=build/icon.ico && node copy-python-to-build.js && node move-build-to-unimain.js",
+    "build:win": "electron-packager . \"Uni Trainer\" --platform=win32 --arch=x64 --out=\"./build-output\" --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$|^/resources$|^/node_modules/electron-packager$|^/node_modules/electron-builder$|^/installer$\" --icon=assets/icons/icon.ico && node scripts/copy-python-to-build.js && node scripts/move-build-to-unimain.js",
     "build:components": "npm run build:win && node scripts/package-components.js",
     "build:installer": "cd installer && npm install && npm run build",
     "build:win:installer": "electron-builder --win",
-    "build:mac": "electron-packager . \"Uni Trainer\" --platform=darwin --arch=x64,arm64 --out=dist --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$\" --icon=build/icon.icns",
+    "build:mac": "electron-packager . \"Uni Trainer\" --platform=darwin --arch=x64,arm64 --out=dist --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$\" --icon=assets/icons/icon.icns",
     "build:all": "npm run build:win && npm run build:mac",
-    "build:watch": "chokidar \"*.js\" \"*.html\" \"*.css\" \"*.py\" -c \"npm run build:win\" --initial",
-    "generate-icons": "node generate-icons.js"
+    "build:watch": "chokidar \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.py\" -c \"npm run build:win\" --initial",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "keywords": [
     "ai",
@@ -45,9 +45,9 @@
       "output": "dist"
     },
     "files": [
-      "*.js",
-      "*.html",
-      "*.css",
+      "src/**/*.js",
+      "src/**/*.html",
+      "src/**/*.css",
       "node_modules/systeminformation/**/*",
       "node_modules/archiver/**/*",
       "node_modules/ssh2/**/*",
@@ -64,7 +64,7 @@
       "!build/**/*",
       "!.git/**/*",
       "python/**/*",
-      "*.py"
+      "src/backend/**/*.py"
     ],
     "win": {
       "target": "dir",

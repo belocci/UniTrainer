@@ -3,13 +3,22 @@ node_modules/
 dist/
 build/
 out/
+release/
 
 # Binaries
 *.exe
+*.dll
+*.pak
+*.bin
+
+# Allow releases artifacts
+!releases/**/*
 
 # Python / ML
 .venv/
+venv/
 __pycache__/
+*.pyc
 *.pt
 *.pth
 *.onnx
@@ -25,6 +34,7 @@ outputs/
 
 # Logs / cache
 *.log
+logs/
 .cache/
 
 # Electron build artifacts
@@ -32,11 +42,4 @@ resources/
 **/resources/
 app.asar
 **/*.asar
-release/
 releases/
-dist/
-out/
-build/
-
-# Binaries
-*.exe
