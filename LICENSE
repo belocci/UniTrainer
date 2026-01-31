@@ -1,21 +1,113 @@
-Copyright (c) Electron contributors
-Copyright (c) 2013-2020 GitHub Inc.
+Overview
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+Uni Trainer is a standalone desktop application designed to simplify the process of training and running machine learning models, including Computer Vision and Tabular models, through an intuitive graphical interface.
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+This software is provided under a Personal Use Only license.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+By installing, accessing, or using Uni Trainer, you agree to the terms outlined below.
+
+Permitted Use
+
+You may use Uni Trainer for:
+
+Personal learning and experimentation
+
+Educational purposes (individual use)
+
+Non-commercial research and prototyping
+
+Local model training and inference on your own data
+
+Testing features and workflows for personal projects
+
+Prohibited Use
+
+You may not use Uni Trainer for:
+
+Commercial purposes of any kind
+
+Business, enterprise, or organizational use
+
+Providing services to third parties (paid or unpaid)
+
+Training models on behalf of clients or employers
+
+Integration into commercial products, services, or workflows
+
+Redistribution, sublicensing, or resale of the software
+
+Reverse engineering, decompiling, or modifying the software
+
+Circumventing licensing, usage limits, or feature restrictions
+
+If you are unsure whether your use case is commercial, it is considered commercial by default.
+
+Ownership & Intellectual Property
+
+Uni Trainer and all associated intellectual property, including but not limited to:
+
+Source code
+
+Application binaries
+
+UI/UX design
+
+Branding and trademarks
+
+are the exclusive property of the Uni Trainer author(s).
+
+This license grants no ownership rights — only a limited, revocable right to use the software under the terms above.
+
+Data & Models
+
+You retain ownership of any data you input into Uni Trainer.
+
+You retain ownership of models you train using your own data.
+
+Uni Trainer does not claim ownership over your datasets or outputs.
+
+You are responsible for ensuring that your data usage complies with all applicable laws and regulations.
+
+No Warranty
+
+Uni Trainer is provided “as is”, without warranty of any kind.
+
+The author(s) make no guarantees regarding:
+
+Accuracy of results
+
+Performance or uptime
+
+Fitness for a particular purpose
+
+Compatibility with future systems or frameworks
+
+Use the software at your own risk.
+
+Limitation of Liability
+
+In no event shall the author(s) of Uni Trainer be liable for any damages arising from the use or inability to use the software, including but not limited to:
+
+Data loss
+
+Model inaccuracies
+
+Business interruption
+
+Financial loss
+
+Termination
+
+This license is automatically terminated if you violate any of its terms.
+
+Upon termination, you must cease all use of Uni Trainer and delete all copies in your possession.
+
+Commercial Licensing
+
+Commercial, enterprise, educational-institution, or team use requires a separate commercial license.
+
+If you are interested in commercial use, please contact the Uni Trainer team to discuss licensing options.
+
+Acceptance
+
+By installing or using Uni Trainer, you acknowledge that you have read, understood, and agreed to this Personal Use Only License.
