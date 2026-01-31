@@ -13,8 +13,5 @@ Train AI models in **3 clicks**.
 
 ## Download Uni Trainer (Windows)
 
-**Official Windows Installer:**  
-https://drive.google.com/file/d/1cQvv-AEl4FmD_vkqgs1WBJzLJwGbn5v2/view
-
 Executable location after install: https://github.com/belocci/UniTrainer/releases
 
