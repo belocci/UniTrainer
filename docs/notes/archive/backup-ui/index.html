@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uni Trainer - AI Training</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="notification" class="notification">
+            <span class="notification-icon">✓</span>
+            <span class="notification-text">Action Successful</span>
+        </div>
+        <div class="title-bar">
+            <div class="title-bar-drag"></div>
+            <button id="closeBtn" class="title-bar-btn close-btn" title="Close">×</button>
+        </div>
+        <div class="content-wrapper">
+            <div class="left-panel">
+            <header class="header">
+                <h1>UNI TRAINER</h1>
+                <p class="subtitle">AI Training Control</p>
+            </header>
+
+            <main class="main-content">
+                <div class="system-info card">
+                    <h2>System</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">CPU:</span>
+                            <span class="value">
+                                <span id="cpu-info">Detecting...</span>
+                                <canvas id="cpuSparkline" class="sparkline-canvas" width="60" height="20"></canvas>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">GPU:</span>
+                            <span class="value">
+                                <span id="gpu-info">Detecting...</span>
+                                <canvas id="gpuSparkline" class="sparkline-canvas" width="60" height="20"></canvas>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Memory:</span>
+                            <span id="memory-info" class="value">Detecting...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Status:</span>
+                            <span id="status" class="value status-ready">Ready</span>
+                        </div>
+                    </div>
+                    <button id="refreshBtn" class="btn btn-ghost">
+                        <span class="refresh-icon">↻</span>
+                        <span class="refresh-text">Refresh</span>
+                    </button>
+                </div>
+
+                <div class="data-section card">
+                    <h2>Training Data</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="fileInput" multiple webkitdirectory directory style="display: none;">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Drop files/folders here or click to upload</div>
+                            <div class="upload-subtext">CSV, JSON, Images, Text, Folders</div>
+                        </div>
+                    </div>
+                    <div id="fileList" class="file-list"></div>
+                </div>
+
+                <div class="model-purpose-section card" id="modelPurposeSection" style="display: none;">
+                    <h2>Model Configuration</h2>
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label>Model Type</label>
+                            <span class="setting-help" title="Select what the model will be used for">?</span>
+                        </div>
+                        <div class="setting-description">Choose the type of task this model will perform</div>
+                        <select id="modelPurposeInput" class="setting-select">
+                            <option value="computer_vision">Computer Vision - Image classification, object detection, etc.</option>
+                            <option value="machine_learning">Machine Learning - General ML tasks, regression, classification</option>
+                            <option value="natural_language_processing">Natural Language Processing - Text analysis, language models</option>
+                            <option value="reinforcement_learning">Reinforcement Learning - Game AI, robotics, decision making</option>
+                            <option value="time_series">Time Series - Forecasting, sequence prediction</option>
+                            <option value="generative">Generative Models - GANs, VAEs, text/image generation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group" id="frameworkGroup" style="display: none;">
+                        <div class="setting-header">
+                            <label>Framework</label>
+                            <span class="setting-help" title="Select the machine learning framework">?</span>
+                        </div>
+                        <div class="setting-description">Choose the framework for this model type</div>
+                        <select id="frameworkInput" class="setting-select">
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group" id="modelVariantGroup" style="display: none;">
+                        <div class="setting-header">
+                            <label>Model Variant</label>
+                            <span class="setting-help" title="Select the specific model architecture">?</span>
+                        </div>
+                        <div class="setting-description">Choose the model architecture variant ⭐ Recommended</div>
+                        <select id="modelVariantInput" class="setting-select">
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group" id="formatGroup" style="display: none;">
+                        <div class="setting-header">
+                            <label>Model Format</label>
+                            <span class="setting-help" title="Select the format to save the trained model">?</span>
+                        </div>
+                        <div class="setting-description">File format for the saved model</div>
+                        <select id="modelFormatInput" class="setting-select">
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-section card" id="settingsSection" style="display: none;">
+                    <h2>Training Settings</h2>
+                    
+                    <div class="settings-mode-toggle">
+                        <button id="presetModeBtn" class="mode-btn active">Preset</button>
+                        <button id="manualModeBtn" class="mode-btn">Manual</button>
+                    </div>
+
+                    <div id="presetSettings" class="preset-settings">
+                        <div class="slider-container">
+                            <div class="slider-labels">
+                                <span>Speed</span>
+                                <span>Quality</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" id="qualitySlider" class="quality-slider" min="0" max="100" value="100">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="sliderFill"></div>
+                                <div class="slider-handle" id="sliderHandle"></div>
+                            </div>
+                            <div class="preset-info">
+                                <span id="presetLabel">Maximum Quality</span>
+                                <span id="presetDescription">Best results, longer training time</span>
+                            </div>
+                        </div>
+                        <button id="applyPresetBtn" class="btn btn-primary">Apply Settings</button>
+                    </div>
+
+                    <div id="manualSettings" class="manual-settings" style="display: none;">
+                        <div class="setting-group">
+                            <div class="setting-header">
+                                <label>Epochs</label>
+                                <span class="setting-help" title="Number of complete passes through the training dataset">?</span>
+                            </div>
+                            <div class="setting-description">How many times the model sees the entire dataset</div>
+                            <select id="epochsInput" class="setting-select">
+                                <option value="5">5 - Very Fast (Quick tests)</option>
+                                <option value="10">10 - Fast ⭐ Recommended</option>
+                                <option value="20">20 - Balanced</option>
+                                <option value="50">50 - High Quality</option>
+                                <option value="100">100 - Maximum Quality</option>
+                                <option value="200">200 - Extreme (Very long training)</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-header">
+                                <label>Batch Size</label>
+                                <span class="setting-help" title="Number of samples processed before updating model weights">?</span>
+                            </div>
+                            <div class="setting-description">Samples processed per training step</div>
+                            <select id="batchSizeInput" class="setting-select">
+                                <option value="8">8 - Very Small (Low memory)</option>
+                                <option value="16">16 - Small</option>
+                                <option value="32">32 - Medium ⭐ Recommended</option>
+                                <option value="64">64 - Large</option>
+                                <option value="128">128 - Very Large (High memory)</option>
+                                <option value="256">256 - Maximum (Requires 16GB+ GPU)</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-header">
+                                <label>Learning Rate</label>
+                                <span class="setting-help" title="Step size for weight updates during training">?</span>
+                            </div>
+                            <div class="setting-description">How quickly the model learns (higher = faster but less stable)</div>
+                            <select id="learningRateInput" class="setting-select">
+                                <option value="0.0001">0.0001 - Very Conservative</option>
+                                <option value="0.0005">0.0005 - Conservative</option>
+                                <option value="0.001">0.001 - Standard ⭐ Recommended</option>
+                                <option value="0.005">0.005 - Aggressive</option>
+                                <option value="0.01">0.01 - Very Aggressive</option>
+                                <option value="0.1">0.1 - Extreme (May be unstable)</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-header">
+                                <label>Optimizer</label>
+                                <span class="setting-help" title="Algorithm that updates model weights during training">?</span>
+                            </div>
+                            <div class="setting-description">Algorithm used to update model parameters</div>
+                            <select id="optimizerInput" class="setting-select">
+                                <option value="adam">Adam - Adaptive, works well for most cases ⭐ Recommended</option>
+                                <option value="adamw">AdamW - Adam with weight decay (better regularization)</option>
+                                <option value="sgd">SGD - Simple, good for fine-tuning</option>
+                                <option value="rmsprop">RMSprop - Good for recurrent networks</option>
+                                <option value="adagrad">AdaGrad - Adaptive gradient (sparse data)</option>
+                                <option value="nadam">NAdam - Nesterov-accelerated Adam</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-header">
+                                <label>Loss Function</label>
+                                <span class="setting-help" title="Function that measures how far predictions are from actual values">?</span>
+                            </div>
+                            <div class="setting-description">Measures prediction error during training</div>
+                            <select id="lossFunctionInput" class="setting-select">
+                                <option value="mse">Mean Squared Error - Regression tasks ⭐ Recommended</option>
+                                <option value="categorical_crossentropy">Categorical Crossentropy - Multi-class classification</option>
+                                <option value="binary_crossentropy">Binary Crossentropy - Binary classification</option>
+                                <option value="sparse_categorical_crossentropy">Sparse Categorical - Multi-class (integer labels)</option>
+                                <option value="mae">Mean Absolute Error - Regression (robust to outliers)</option>
+                                <option value="huber">Huber Loss - Regression (combines MSE & MAE)</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-header">
+                                <label>Validation Split</label>
+                                <span class="setting-help" title="Percentage of data reserved for validation">?</span>
+                            </div>
+                            <div class="setting-description">Fraction of data used for validation (not trained on)</div>
+                            <select id="validationSplitInput" class="setting-select">
+                                <option value="0.1">10% - More training data</option>
+                                <option value="0.2">20% - Standard ⭐ Recommended</option>
+                                <option value="0.3">30% - More validation data</option>
+                                <option value="0.4">40% - High validation (large datasets)</option>
+                            </select>
+                        </div>
+                        <button id="applyManualBtn" class="btn btn-primary">Apply Settings</button>
+                    </div>
+                </div>
+
+                <div class="training-section card">
+                    <h2>Training</h2>
+                    <div class="controls">
+                        <button id="testGpuBtn" class="btn">Test GPU</button>
+                        <button id="testCpuBtn" class="btn">Test CPU</button>
+                        <button id="startTrainingBtn" class="btn btn-primary">Start Training</button>
+                        <button id="stopTrainingBtn" class="btn" disabled>Stop</button>
+                        <button id="trainNewModelBtn" class="btn" style="margin-left: 8px;">Train New Model</button>
+                    </div>
+                    <div class="output-container">
+                        <div id="output" class="output">Ready to start training...</div>
+                    </div>
+                </div>
+
+                <div class="monitoring card">
+                    <h2>Resources</h2>
+                    <div class="monitor-grid">
+                        <div class="monitor-item">
+                            <div class="monitor-label">CPU</div>
+                            <div class="progress-bar">
+                                <div id="cpu-usage" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <span id="cpu-percent" class="percent">0%</span>
+                        </div>
+                        <div class="monitor-item">
+                            <div class="monitor-label">GPU</div>
+                            <div class="progress-bar">
+                                <div id="gpu-usage" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <span id="gpu-percent" class="percent">0%</span>
+                        </div>
+                        <div class="monitor-item">
+                            <div class="monitor-label">Memory</div>
+                            <div class="progress-bar">
+                                <div id="memory-usage" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <span id="memory-percent" class="percent">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-section card" id="modelSection" style="display: none;">
+                    <h2>Saved Model</h2>
+                    <div class="model-info">
+                        <div class="model-path">
+                            <span class="model-label">Location:</span>
+                            <span id="modelPath" class="model-path-text"></span>
+                        </div>
+                        <div class="model-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button id="openModelLocationBtn" class="btn btn-primary">Open File Location</button>
+                            <button id="retrainModelBtn" class="btn">Retrain</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="load-model-section card" id="loadModelSection">
+                    <h2>Load Model / Continue Training</h2>
+                    <div class="model-browser">
+                        <button id="refreshModelsBtn" class="btn" style="margin-bottom: 12px;">Refresh Model List</button>
+                        <div id="modelsList" class="models-list">
+                            <div class="model-item-empty">No saved models found. Train a model to see it here.</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+            <div class="right-panel">
+                <div class="neural-header">
+                    <h2 class="neural-title">Neural Connections</h2>
+                    <div class="neural-metrics">
+                        <div class="north-star-metric">
+                            <div class="metric-label">Training Progress</div>
+                            <div id="northStarValue" class="metric-value">--</div>
+                        </div>
+                        <div class="secondary-metrics">
+                            <div class="metric-item">
+                                <span class="metric-label-small">Accuracy</span>
+                                <div class="metric-value-container">
+                                    <span id="currentAccuracy" class="metric-value-small">--</span>
+                                    <canvas id="accuracySparkline" class="metric-sparkline" width="60" height="20"></canvas>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label-small">Loss</span>
+                                <div class="metric-value-container">
+                                    <span id="currentLoss" class="metric-value-small">--</span>
+                                    <canvas id="lossSparkline" class="metric-sparkline" width="60" height="20"></canvas>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label-small">Epoch</span>
+                                <div class="metric-value-container">
+                                    <span id="currentEpoch" class="metric-value-small">--</span>
+                                    <canvas id="epochSparkline" class="metric-sparkline" width="60" height="20"></canvas>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label-small">Parameters</span>
+                                <div class="metric-value-container">
+                                    <span id="parameterCount" class="metric-value-small">--</span>
+                                    <canvas id="paramSparkline" class="metric-sparkline" width="60" height="20"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="visualization-container">
+                    <canvas id="neuralCanvas"></canvas>
+                    <canvas id="trainingChart" class="training-chart"></canvas>
+                    <div id="chartTooltip" class="chart-tooltip"></div>
+                </div>
+                <div id="neuralTooltip" class="neural-tooltip"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="neural-network.js"></script>
+    <script src="renderer.js"></script>
+</body>
+</html>
