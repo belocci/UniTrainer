@@ -75,6 +75,13 @@ This release focuses on usability and visual clarity. Core training logic remain
 - CSV-based regression
 - Automatic feature/target handling
 
+### Small Language Model
+- CSV-based training
+- Text Classification
+- Fine Tuning
+- Inferencing
+
+
 ### Coming Soon
 - NLP model training
 - Reinforcement learning
