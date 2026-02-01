@@ -1,4 +1,4 @@
-## OUR COMMUNITY! https://discord.gg/BbVTCC43
+## OUR COMMUNITY! [https://discord.gg/BbVTCC43](https://discord.gg/Uka8HzntRJ)
 
 ## Using Uni Trainer
 
@@ -49,13 +49,14 @@ Uni Trainer is designed for builders, students, and researchers who want to **fo
 
 ---
 
-## 🆕 v2 Highlights
+## 🆕 v3.1 Highlights
 
 - Fully refreshed modern light UI
 - Cleaner training workflow and layout
 - Consistent model and setting selectors
 - Improved action hierarchy and clarity
 - Polished training progress and logs
+- Tab selection between training, inferencing, and fine tuning
 
 This release focuses on usability and visual clarity. Core training logic remains unchanged.
 
@@ -67,6 +68,7 @@ This release focuses on usability and visual clarity. Core training logic remain
 - Image classification
 - Object detection (YOLO-based)
 - Automatic dataset structure handling
+- Fine tuning
 
 ### Tabular Machine Learning
 - CSV-based classification
