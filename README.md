@@ -10,7 +10,7 @@ Optional cloud execution is available via CanopyWave.
 
 See docs/install.md for installation steps.
 
-# Uni Trainer : DOWNLOAD : https://drive.google.com/file/d/1cQvv-AEl4FmD_vkqgs1WBJzLJwGbn5v2/view?usp=drive_link
+# Uni Trainer : DOWNLOAD :(https://github.com/belocci/UniTrainer/releases)
 
 ## Quick Start (Windows)
 
