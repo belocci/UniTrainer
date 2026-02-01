@@ -23,6 +23,7 @@ let uploadedFiles = [];
 let selectedFolderPath = null; // Track selected folder path for faster real training
 let selectedDatasetFile = null; // Track selected CSV file path (for tabular data)
 let isRealTraining = false; // Track if real training is active
+let isTrainingActive = false;
 let trainingSettings = {
     epochs: 10,
     batchSize: 32,
@@ -43,12 +44,22 @@ let modelVariant = '';
 let modelFormat = 'pytorch';
 let isManualMode = false;
 let trainingMode = 'local'; // 'local' or 'cloud'
+let isModeTransitioning = false;
 
 // Use window.* for cloud-related globals to ensure they're accessible across all scopes
 window.canopywaveApiKey = null; // Store CanopyWave API key
 window.cloudGPUInfo = null; // Store selected cloud GPU information
 window.cloudConfig = null; // Store cloud configuration (project, region, GPU, image, password)
 window.currentCloudInstanceId = null; // Store current cloud instance ID for stopping/monitoring
+window.selectedCloudProvider = 'canopywave';
+
+let fineTuneBaseSource = 'unimodels';
+let fineTuneBaseModelPath = '';
+let fineTuneBaseModelId = '';
+let fineTuneImportPath = '';
+let fineTuneDatasetPath = '';
+let fineTuneStrategy = 'fast';
+let fineTuneRunModelPath = '';
 
 // Note: All cloud state is now stored in window.* globals
 // Access via window.canopywaveApiKey, window.cloudConfig, etc.
@@ -341,6 +352,7 @@ let totalEpochs = 0;
 let savedModelPath = null;
 let trainingHistory = [];
 let savedCheckpoint = null; // For resuming training
+let pendingModelPath = null;
 let displayedProgress = 0; // Smoothly displayed progress (0-100)
 let estimatedTrainingDuration = 0; // Estimated total training time in seconds
 let progressEstimationInterval = null; // Interval for progress estimation
@@ -2459,6 +2471,7 @@ async function startTraining() {
     if (trainingMode === 'cloud') {
         log('Starting CLOUD training...', 'success');
         log('Training will be performed on CanopyWave cloud GPU', 'log');
+        isTrainingActive = true;
         await startCloudTraining();
         return;
     }
@@ -2480,6 +2493,7 @@ async function startTraining() {
         log('Training time will depend on your dataset size and hardware.', 'warning');
         
         // Start real training
+        isTrainingActive = true;
         await startRealTraining();
     } else if (useRealTraining) {
         log('Starting REAL training...', 'success');
@@ -2487,12 +2501,14 @@ async function startTraining() {
         log('Training time will depend on your dataset size and hardware.', 'warning');
         
         // Start real training
+        isTrainingActive = true;
         await startRealTraining();
     } else {
         // For unsupported models, check if folder is selected - if so, try real training anyway
         if (hasSelectedFolder) {
             log('Selected folder detected. Attempting real training...', 'log');
             log('Note: Real training may not be fully implemented for this model type.', 'warning');
+            isTrainingActive = true;
             await startRealTraining();
         } else {
             log('Starting SIMULATION training...', 'warning');
@@ -2501,6 +2517,7 @@ async function startTraining() {
             log('Or select a folder to attempt real training.', 'log');
             
             // Fallback to simulation
+            isTrainingActive = true;
             startSimulationTraining();
         }
     }
@@ -2514,6 +2531,7 @@ function startSimulationTraining() {
     }
     
     isRealTraining = false; // Mark simulation training as active
+    isTrainingActive = true;
     
     // Check if folder is selected or files are uploaded
     if (!selectedFolderPath && uploadedFiles.length === 0) {
@@ -2856,6 +2874,7 @@ function setTrainingButtonsEnabled(enabled) {
 
 // Stop training
 function stopTraining(wasCompletedOverride) {
+    isTrainingActive = false;
     // If real training is active, send stop signal first
     if (isRealTraining) {
         ipcRenderer.send('stop-real-training');
@@ -4951,6 +4970,7 @@ function updateSettingsVisibility() {
     const lossFunctionGroup = lossFunctionInput?.closest('.setting-group');
     const deviceGroup = deviceInput?.closest('.setting-group');
     const validationSplitGroup = validationSplitInput?.closest('.setting-group');
+    const fineTuneCvBtn = document.getElementById('fineTuneCvBtn');
     
     // Show/hide based on schema
     if (schema.hide.includes('epochs')) {
@@ -4997,6 +5017,11 @@ function updateSettingsVisibility() {
         randomForestSettings.style.display = 'block';
     } else if (randomForestSettings) {
         randomForestSettings.style.display = 'none';
+    }
+
+    if (fineTuneCvBtn) {
+        const showFineTune = purpose === 'computer_vision' && framework === 'yolo';
+        fineTuneCvBtn.style.display = showFineTune ? 'inline-flex' : 'none';
     }
     
     // Add helper text if available
@@ -5332,6 +5357,10 @@ ipcRenderer.on('training-progress', (event, progressData) => {
     console.log('Full data:', JSON.stringify(progressData, null, 2));
     console.log('===============================');
     
+    if (!isTrainingActive) {
+        return;
+    }
+
     // Handle training_started flag - ensure neural network visualization is active
     // Don't call startTraining() here as it's already been called in startRealTraining()
     // Just update progress if needed
@@ -5573,14 +5602,18 @@ ipcRenderer.on('training-log', (event, logData) => {
         const artifactMatch = message.match(/Model artifact saved to:\s*(.+?)(?:\s*$|[\r\n])/i);
         if (artifactMatch && artifactMatch[1]) {
             const artifactPath = artifactMatch[1].trim();
-            savedModelPath = artifactPath;
-            const modelPathEl = document.getElementById('modelPath');
-            if (modelPathEl) {
-                modelPathEl.textContent = artifactPath;
-            }
-            const modelSection = document.getElementById('modelSection');
-            if (modelSection) {
-                modelSection.style.display = 'block';
+            pendingModelPath = artifactPath;
+            const trainingFinished = typeof trainingState !== 'undefined' && trainingState.finished;
+            if (trainingFinished) {
+                savedModelPath = pendingModelPath;
+                const modelPathEl = document.getElementById('modelPath');
+                if (modelPathEl) {
+                    modelPathEl.textContent = pendingModelPath;
+                }
+                const modelSection = document.getElementById('modelSection');
+                if (modelSection) {
+                    modelSection.style.display = 'block';
+                }
             }
         }
     }
@@ -5610,18 +5643,19 @@ ipcRenderer.on('training-log', (event, logData) => {
                 const separator = saveDir.includes('\\') ? '\\' : '/';
                 const modelPath = saveDir + separator + 'weights' + separator + 'best.pt';
                 
-                // Always update savedModelPath from log messages (they're more reliable)
-                savedModelPath = modelPath;
-                const modelPathEl = document.getElementById('modelPath');
-                if (modelPathEl) {
-                    modelPathEl.textContent = modelPath;
+                pendingModelPath = modelPath;
+                const trainingFinished = typeof trainingState !== 'undefined' && trainingState.finished;
+                if (trainingFinished) {
+                    savedModelPath = pendingModelPath;
+                    const modelPathEl = document.getElementById('modelPath');
+                    if (modelPathEl) {
+                        modelPathEl.textContent = pendingModelPath;
+                    }
+                    const modelSection = document.getElementById('modelSection');
+                    if (modelSection) {
+                        modelSection.style.display = 'block';
+                    }
                 }
-                // Show the model section if it's hidden
-                const modelSection = document.getElementById('modelSection');
-                if (modelSection) {
-                    modelSection.style.display = 'block';
-                }
-                console.log('[Renderer] Extracted model path from log:', modelPath);
             }
         }
     }
@@ -5681,11 +5715,36 @@ ipcRenderer.on('training-result', (event, resultData) => {
         } else {
             log(`Model saved to: ${resultData.model_path}`, 'success');
         }
+    } else if (pendingModelPath && !savedModelPath) {
+        savedModelPath = pendingModelPath;
+        const modelPathEl = document.getElementById('modelPath');
+        if (modelPathEl) {
+            modelPathEl.textContent = savedModelPath;
+        }
+        log(`Model saved to: ${savedModelPath}`, 'success');
     } else if (savedModelPath) {
         log(`Model saved to: ${savedModelPath}`, 'success');
     }
     
     document.getElementById('modelSection').style.display = 'block';
+
+    if (resultData.metrics && resultData.metrics.baseline && resultData.metrics.final) {
+        const fineTuneResults = document.getElementById('fineTuneResults');
+        if (fineTuneResults) {
+            const base = resultData.metrics.baseline || {};
+            const fin = resultData.metrics.final || {};
+            const map50Before = document.getElementById('fineTuneMap50Before');
+            const map50After = document.getElementById('fineTuneMap50After');
+            const map5095Before = document.getElementById('fineTuneMap5095Before');
+            const map5095After = document.getElementById('fineTuneMap5095After');
+            if (map50Before) map50Before.textContent = (base.map50 ?? 0).toFixed(3);
+            if (map50After) map50After.textContent = (fin.map50 ?? 0).toFixed(3);
+            if (map5095Before) map5095Before.textContent = (base.map5095 ?? 0).toFixed(3);
+            if (map5095After) map5095After.textContent = (fin.map5095 ?? 0).toFixed(3);
+            fineTuneResults.style.display = 'block';
+        }
+        fineTuneRunModelPath = resultData.model_path || fineTuneRunModelPath;
+    }
     
     // Update status indicator to Completed
     const statusIndicator = document.getElementById('trainingStatusIndicator');
@@ -5706,6 +5765,7 @@ ipcRenderer.on('training-result', (event, resultData) => {
     
     // Refresh model list
     loadSavedModels();
+    loadCvModels();
 });
 
 ipcRenderer.on('training-error', (event, errorData) => {
@@ -5760,6 +5820,17 @@ ipcRenderer.on('training-finished', (event, data) => {
     trainingState.stopped = false; // Clear stopped flag since we finished successfully
     log('Training finished', 'success');
     stopTraining(false);
+    if (pendingModelPath && !savedModelPath) {
+        savedModelPath = pendingModelPath;
+        const modelPathEl = document.getElementById('modelPath');
+        if (modelPathEl) {
+            modelPathEl.textContent = savedModelPath;
+        }
+        const modelSection = document.getElementById('modelSection');
+        if (modelSection) {
+            modelSection.style.display = 'block';
+        }
+    }
 });
 
 // Reset state when training starts
@@ -5976,6 +6047,9 @@ ipcRenderer.on('model-save-error', (event, error) => {
 // Global function for button onclick (as fallback) - MUST be in global scope
 window.showMainApp = function(selectedMode = 'local') {
     console.log('showMainApp called from renderer.js with mode:', selectedMode);
+    if (isModeTransitioning) {
+        return;
+    }
     trainingMode = selectedMode; // Store the selected training mode
     const splashScreen = document.getElementById('splashScreen');
     const mainApp = document.getElementById('mainApp');
@@ -5983,18 +6057,48 @@ window.showMainApp = function(selectedMode = 'local') {
     console.log('Elements found - splashScreen:', splashScreen, 'mainApp:', mainApp);
     console.log('Training mode set to:', trainingMode);
     
+    const prefersReducedMotion = () => {
+        return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    };
+
+    const transitionDuration = prefersReducedMotion() ? 1 : 260;
+    isModeTransitioning = true;
+
     if (splashScreen) {
-        splashScreen.style.display = 'none';
-        splashScreen.classList.add('hidden');
-        console.log('Splash screen hidden');
+        splashScreen.classList.add('view-exit');
     }
-    
+
     if (mainApp) {
         mainApp.classList.remove('hidden');
         mainApp.style.display = 'flex';
         mainApp.style.visibility = 'visible';
-        mainApp.style.opacity = '1';
-        console.log('Main app shown');
+        mainApp.classList.add('view-enter');
+    }
+
+    requestAnimationFrame(() => {
+        if (splashScreen) {
+            splashScreen.classList.add('view-exit-active');
+        }
+        if (mainApp) {
+            mainApp.classList.add('view-enter-active');
+        }
+    });
+
+    setTimeout(() => {
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+            splashScreen.classList.add('hidden');
+            splashScreen.style.visibility = 'hidden';
+            splashScreen.classList.remove('view-exit', 'view-exit-active');
+            console.log('Splash screen hidden');
+        }
+
+        if (mainApp) {
+            mainApp.style.opacity = '1';
+            mainApp.classList.remove('view-enter', 'view-enter-active');
+            console.log('Main app shown');
+        }
+        isModeTransitioning = false;
         
         // Show/hide device selector based on training mode
         const deviceInputGroup = document.querySelector('#deviceInput')?.closest('.setting-group');
@@ -6022,7 +6126,7 @@ window.showMainApp = function(selectedMode = 'local') {
             // Hide balance for local mode
             hideBalanceDisplay();
         }
-    }
+    }, transitionDuration);
 };
 
 // Event listeners
@@ -6057,9 +6161,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 trainingModeCards.forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 
-                // If cloud training, show login modal first
+                // If cloud training, show provider selector first
                 if (mode === 'cloud') {
-                    showCanopywaveLoginModal();
+                    showCloudProviderModal();
                 } else {
                     // Local training - proceed directly
                     if (window.showMainApp) {
@@ -6089,9 +6193,87 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeApp();
     }
     
-    // Initialize CanopyWave login modal handlers
+    // Initialize cloud provider selector and CanopyWave login handlers
+    initializeCloudProviderSelector();
     initializeCanopywaveLogin();
+    initializeFineTuneModal();
+    initializePageTabs();
 });
+
+function showCloudProviderModal() {
+    const modal = document.getElementById('cloudProviderModal');
+    const providerList = document.getElementById('cloudProviderList');
+    if (providerList) {
+        const options = providerList.querySelectorAll('.provider-option');
+        options.forEach(option => {
+            const isSelected = option.dataset.provider === (window.selectedCloudProvider || 'canopywave');
+            option.classList.toggle('selected', isSelected);
+            option.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        });
+    }
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+function hideCloudProviderModal() {
+    const modal = document.getElementById('cloudProviderModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function initializeCloudProviderSelector() {
+    const modal = document.getElementById('cloudProviderModal');
+    const cancelBtn = document.getElementById('cancelProviderBtn');
+    const confirmBtn = document.getElementById('confirmProviderBtn');
+    const providerList = document.getElementById('cloudProviderList');
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideCloudProviderModal();
+            const trainingModeCards = document.querySelectorAll('.training-mode-card');
+            trainingModeCards.forEach(c => c.classList.remove('selected'));
+        });
+    }
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const selected = providerList ? providerList.querySelector('.provider-option.selected') : null;
+            const provider = selected ? selected.dataset.provider : 'canopywave';
+            window.selectedCloudProvider = provider || 'canopywave';
+            hideCloudProviderModal();
+            if (window.selectedCloudProvider === 'canopywave') {
+                showCanopywaveLoginModal();
+            }
+        });
+    }
+
+    if (providerList) {
+        providerList.addEventListener('click', (e) => {
+            const option = e.target.closest('.provider-option');
+            if (!option) return;
+            providerList.querySelectorAll('.provider-option').forEach(item => {
+                item.classList.remove('selected');
+                item.setAttribute('aria-selected', 'false');
+            });
+            option.classList.add('selected');
+            option.setAttribute('aria-selected', 'true');
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideCloudProviderModal();
+                const trainingModeCards = document.querySelectorAll('.training-mode-card');
+                trainingModeCards.forEach(c => c.classList.remove('selected'));
+            }
+        });
+    }
+}
 
 // CanopyWave Login Functions
 function showCanopywaveLoginModal() {
@@ -6181,6 +6363,273 @@ function initializeCanopywaveLogin() {
             console.log('Help link clicked - open CanopyWave docs');
         });
     }
+}
+
+function initializeFineTuneModal() {
+    const modal = document.getElementById('fineTuneModal');
+    const options = document.querySelectorAll('.fine-tune-option');
+    const strategies = document.querySelectorAll('.fine-tune-strategy');
+    const importBtn = document.getElementById('fineTuneImportBtn');
+    const importPath = document.getElementById('fineTuneImportPath');
+    const datasetBtn = document.getElementById('fineTuneDatasetBtn');
+    const datasetPath = document.getElementById('fineTuneDatasetPath');
+    const advancedToggle = document.getElementById('fineTuneAdvancedToggle');
+    const advancedSection = document.getElementById('fineTuneAdvanced');
+    const cancelBtn = document.getElementById('fineTuneCancelBtn');
+    const startBtn = document.getElementById('fineTuneStartBtn');
+    const runInferenceBtn = document.getElementById('fineTuneRunInferenceBtn');
+
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            options.forEach(btn => btn.classList.remove('selected'));
+            option.classList.add('selected');
+            fineTuneBaseSource = option.dataset.source;
+            updateFineTuneSourceUI();
+        });
+    });
+
+    strategies.forEach(option => {
+        option.addEventListener('click', () => {
+            strategies.forEach(btn => btn.classList.remove('selected'));
+            option.classList.add('selected');
+            fineTuneStrategy = option.dataset.strategy;
+            updateFineTuneStrategyUI();
+        });
+    });
+
+    if (importBtn) {
+        importBtn.addEventListener('click', async () => {
+            const result = await ipcRenderer.invoke('select-weights-file');
+            if (result && result.success) {
+                fineTuneImportPath = result.path;
+                if (importPath) {
+                    importPath.style.display = 'block';
+                    importPath.textContent = fineTuneImportPath;
+                }
+            }
+        });
+    }
+
+    if (datasetBtn) {
+        datasetBtn.addEventListener('click', async () => {
+            const datasetDir = await selectDatasetDirectory();
+            if (datasetDir) {
+                fineTuneDatasetPath = datasetDir;
+                if (datasetPath) {
+                    datasetPath.style.display = 'block';
+                    datasetPath.textContent = datasetDir;
+                }
+            }
+        });
+    }
+
+    if (advancedToggle && advancedSection) {
+        advancedToggle.addEventListener('click', () => {
+            const isVisible = advancedSection.style.display === 'block';
+            advancedSection.style.display = isVisible ? 'none' : 'block';
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeFineTuneModal();
+        });
+    }
+
+    if (startBtn) {
+        startBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            startFineTuneTraining();
+        });
+    }
+
+    const fineTuneStartPageBtn = document.getElementById('fineTuneStartPageBtn');
+    if (fineTuneStartPageBtn) {
+        fineTuneStartPageBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openFineTuneModal();
+        });
+    }
+
+    if (runInferenceBtn) {
+        runInferenceBtn.addEventListener('click', () => {
+            if (!fineTuneRunModelPath) return;
+            const cvModelSelect = document.getElementById('cvModelSelect');
+            const cvInferenceSection = document.getElementById('cvInferenceSection');
+            if (cvModelSelect) {
+                cvModelSelect.value = fineTuneRunModelPath;
+            }
+            if (cvInferenceSection) {
+                cvInferenceSection.style.display = 'block';
+                cvInferenceSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            setActivePage('inference');
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeFineTuneModal();
+            }
+        });
+    }
+}
+
+function setActivePage(page) {
+    const tabs = document.querySelectorAll('.top-tab');
+    const sections = document.querySelectorAll('.page-section[data-page]');
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.page === page);
+    });
+    sections.forEach(section => {
+        section.classList.toggle('page-hidden', section.dataset.page !== page);
+    });
+}
+
+function initializePageTabs() {
+    const tabs = document.querySelectorAll('.top-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            setActivePage(tab.dataset.page);
+        });
+    });
+    setActivePage('training');
+}
+
+function openFineTuneModal() {
+    const modal = document.getElementById('fineTuneModal');
+    if (modal) {
+        modal.classList.add('show');
+    }
+    loadFineTuneModels();
+    updateFineTuneSourceUI();
+    updateFineTuneStrategyUI();
+}
+
+function closeFineTuneModal() {
+    const modal = document.getElementById('fineTuneModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function updateFineTuneSourceUI() {
+    const sourceUni = document.getElementById('fineTuneSourceUni');
+    const sourceImport = document.getElementById('fineTuneSourceImport');
+
+    if (sourceUni) sourceUni.style.display = fineTuneBaseSource === 'unimodels' ? 'block' : 'none';
+    if (sourceImport) sourceImport.style.display = fineTuneBaseSource === 'import' ? 'block' : 'none';
+}
+
+function updateFineTuneStrategyUI() {
+    const strategyButtons = document.querySelectorAll('.fine-tune-strategy');
+    strategyButtons.forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.strategy === fineTuneStrategy);
+    });
+
+    const epochsEl = document.getElementById('fineTuneEpochs');
+    const lrEl = document.getElementById('fineTuneLr');
+    const freezeEl = document.getElementById('fineTuneFreeze');
+
+    if (!epochsEl || !lrEl || !freezeEl) return;
+
+    if (fineTuneStrategy === 'fast') {
+        epochsEl.value = 30;
+        lrEl.value = 0.001;
+        freezeEl.value = 10;
+    } else if (fineTuneStrategy === 'balanced') {
+        epochsEl.value = 60;
+        lrEl.value = 0.0005;
+        freezeEl.value = 5;
+    } else {
+        epochsEl.value = 100;
+        lrEl.value = 0.0001;
+        freezeEl.value = 0;
+    }
+}
+
+async function startFineTuneTraining() {
+    if (isRealTraining) {
+        log('Training already in progress', 'warning');
+        return;
+    }
+
+    const datasetDir = fineTuneDatasetPath || selectedFolderPath;
+    if (!datasetDir) {
+        log('Please select a dataset folder for fine-tuning', 'error');
+        return;
+    }
+
+    let baseWeightsPath = '';
+    let pretrainedName = '';
+    let baseModelId = '';
+
+    if (fineTuneBaseSource === 'unimodels') {
+        const modelSelect = document.getElementById('fineTuneModelSelect');
+        baseWeightsPath = modelSelect ? modelSelect.value : '';
+        baseModelId = modelSelect?.selectedOptions?.[0]?.dataset?.modelId || '';
+    } else if (fineTuneBaseSource === 'import') {
+        baseWeightsPath = fineTuneImportPath;
+    }
+
+    if (!baseWeightsPath) {
+        log('Please select a base model or import weights.', 'error');
+        return;
+    }
+
+    const epochsEl = document.getElementById('fineTuneEpochs');
+    const lrEl = document.getElementById('fineTuneLr');
+    const batchEl = document.getElementById('fineTuneBatch');
+    const imgEl = document.getElementById('fineTuneImgSize');
+    const freezeEl = document.getElementById('fineTuneFreeze');
+
+    const config = {
+        model_purpose: 'computer_vision',
+        framework: 'yolo',
+        variant: 'yolov8',
+        fine_tune: true,
+        strategy: fineTuneStrategy,
+        base_model_source: fineTuneBaseSource,
+        base_model_id: baseModelId,
+        base_weights_path: baseWeightsPath || null,
+        pretrained_name: pretrainedName || null,
+        data_dir: datasetDir,
+        output_dir: (() => {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseDir = path.join(os.homedir(), 'Documents', 'UniTrainer', 'Models');
+            const uniqueDir = path.join(baseDir, `finetune_${timestamp}`);
+            return uniqueDir.replace(/\\/g, '/');
+        })(),
+        epochs: parseInt(epochsEl?.value || '30', 10),
+        learning_rate: parseFloat(lrEl?.value || '0.001'),
+        batch_size: parseInt(batchEl?.value || '16', 10),
+        imgsz: parseInt(imgEl?.value || '640', 10),
+        freeze_layers: parseInt(freezeEl?.value || '10', 10),
+        device: trainingSettings.device || 'auto',
+        format: 'pt'
+    };
+
+    resetTrainingSessionUI();
+    isRealTraining = true;
+    isTrainingActive = true;
+    trainingStartTime = Date.now();
+    trainingHistory = [];
+    lastRealProgress = null;
+
+    document.getElementById('status').textContent = 'Training';
+    document.getElementById('status').className = 'value status-training';
+    document.getElementById('startTrainingBtn').disabled = true;
+    setTrainingButtonsEnabled(true);
+    showTrainingLoadingOverlay();
+
+    log(`[Fine-Tune] Base model: ${baseWeightsPath || pretrainedName}`, 'log');
+    log(`[Fine-Tune] Strategy: ${fineTuneStrategy}`, 'log');
+    log(`[Fine-Tune] Params: epochs=${config.epochs}, lr=${config.learning_rate}, batch=${config.batch_size}`, 'log');
+
+    ipcRenderer.send('start-real-training', config);
+    closeFineTuneModal();
 }
 
 async function handleCanopywaveLogin() {
@@ -7023,7 +7472,7 @@ window.initializeApp = function() {
     if (testGpuBtn) testGpuBtn.addEventListener('click', testGPU);
     if (testCpuBtn) testCpuBtn.addEventListener('click', testCPU);
     if (startTrainingBtn) startTrainingBtn.addEventListener('click', startTraining);
-    if (stopTrainingBtn) stopTrainingBtn.addEventListener('click', stopTraining);
+    if (stopTrainingBtn) stopTrainingBtn.addEventListener('click', () => stopTraining(false));
     
     // Terminate Instance button - Now shuts down the app
     const terminateInstanceBtn = document.getElementById('terminateInstanceBtn');
@@ -7074,6 +7523,13 @@ window.initializeApp = function() {
         });
     }
     if (trainNewModelBtn) trainNewModelBtn.addEventListener('click', trainNewModel);
+    const fineTuneCvBtn = document.getElementById('fineTuneCvBtn');
+    if (fineTuneCvBtn) {
+        fineTuneCvBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openFineTuneModal();
+        });
+    }
     
     // Select folder button for real training - remove old listener first to prevent duplicates
     if (selectFolderBtn) {
@@ -7350,7 +7806,11 @@ window.initializeApp = function() {
                             if (prepareResult.stderr) {
                                 log(prepareResult.stderr, 'error');
                             }
-                            log('LabelMe detected, but prepare_dataset.py is missing. Using the selected folder as-is.', 'warning');
+                            if (prepareResult.error && prepareResult.error.toLowerCase().includes('prepare_dataset.py')) {
+                                log('LabelMe detected, but prepare_dataset.py is missing. Using the selected folder as-is.', 'warning');
+                            } else {
+                                log('LabelMe detected, but dataset preparation failed. Using the selected folder as-is.', 'warning');
+                            }
                             selectedFolderPath = inputFolder;
                             selectedDatasetFile = null;
                             document.getElementById('folderPathText').textContent = selectedFolderPath;
@@ -7769,6 +8229,29 @@ async function loadCvModels() {
                     cvModelSelect.value = models[0].path;
                 }
             }
+        }
+    } catch (error) {
+        log(`Error loading CV models: ${error.message}`, 'error');
+    }
+}
+
+async function loadFineTuneModels() {
+    try {
+        const models = await ipcRenderer.invoke('list-cv-models');
+        const fineTuneModelSelect = document.getElementById('fineTuneModelSelect');
+        if (!fineTuneModelSelect) return;
+        fineTuneModelSelect.innerHTML = '<option value="">Select model...</option>';
+        if (models.length === 0) {
+            fineTuneModelSelect.innerHTML += '<option value="" disabled>No CV models found.</option>';
+        } else {
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.path;
+                option.textContent = `${model.name} (${new Date(model.timestamp).toLocaleDateString()})`;
+                option.dataset.modelId = model.name;
+                fineTuneModelSelect.appendChild(option);
+            });
+            fineTuneModelSelect.value = models[0].path;
         }
     } catch (error) {
         log(`Error loading CV models: ${error.message}`, 'error');

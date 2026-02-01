@@ -7,14 +7,15 @@
     "start": "electron .",
     "dev": "electron .",
     "build": "electron-builder",
-    "build:win": "electron-packager . \"Uni Trainer\" --platform=win32 --arch=x64 --out=\"./build-output\" --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$|^/resources$|^/node_modules/electron-packager$|^/node_modules/electron-builder$|^/installer$\" --icon=assets/icons/icon.ico && node scripts/copy-python-to-build.js && node scripts/move-build-to-unimain.js",
+    "build:win": "electron-packager . \"Uni Trainer\" --platform=win32 --arch=x64 --out=\"./build-output\" --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/releases$|^/out$|^/build-cache$|^/\\.git$|^/resources$|^/node_modules/electron-packager$|^/node_modules/electron-builder$|^/installer$\" --icon=assets/icons/icon.ico && node scripts/copy-python-to-build.js && node scripts/move-build-to-unimain.js",
     "build:components": "npm run build:win && node scripts/package-components.js",
     "build:installer": "cd installer && npm install && npm run build",
     "build:win:installer": "electron-builder --win",
     "build:mac": "electron-packager . \"Uni Trainer\" --platform=darwin --arch=x64,arm64 --out=dist --overwrite --asar --ignore=\"^/python$|^/datasets$|^/uploads$|^/runs$|^/output$|^/results$|^/training$|^/temp$|^/tmp$|^/venv$|^/\\.venv$|__pycache__|/\\.cache/|^/dist$|^/release$|^/out$|^/build-cache$|^/\\.git$\" --icon=assets/icons/icon.icns",
     "build:all": "npm run build:win && npm run build:mac",
     "build:watch": "chokidar \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.py\" -c \"npm run build:win\" --initial",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "size:win": "node scripts/size-report-win.js"
   },
   "keywords": [
     "ai",

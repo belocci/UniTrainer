@@ -1542,6 +1542,22 @@ ipcMain.handle('select-image-file', async (event) => {
   return null;
 });
 
+// Handle selecting YOLO weights (.pt)
+ipcMain.handle('select-weights-file', async (event) => {
+  const { dialog } = require('electron');
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'PyTorch Weights', extensions: ['pt'] }
+    ]
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return { success: true, path: result.filePaths[0] };
+  }
+  return { success: false, canceled: true };
+});
+
 // Handle selecting CSV file
 ipcMain.handle('select-csv-file', async (event) => {
   const { dialog } = require('electron');
@@ -1651,7 +1667,8 @@ ipcMain.handle('prepare-dataset', async (event, inputFolder, outputFolder) => {
         path.join(__dirname, 'python', 'prepare_dataset.py'), // Development
         path.join(execDir, 'resources', 'python', 'prepare_dataset.py'), // Packaged (electron-packager)
         path.join(execDir, 'python', 'prepare_dataset.py'), // Alternative packaged path
-        path.resolve(__dirname, '..', 'python', 'prepare_dataset.py') // Fallback
+        path.resolve(__dirname, '..', 'python', 'prepare_dataset.py'), // Fallback
+        path.resolve(__dirname, '..', '..', 'python', 'prepare_dataset.py') // Repo root python folder
       ];
       
       let pythonScript = null;
@@ -1671,7 +1688,13 @@ ipcMain.handle('prepare-dataset', async (event, inputFolder, outputFolder) => {
         return;
       }
       
-      const pythonCmd = findPythonPath();
+      const bundledPythonCandidates = [
+        path.join(process.resourcesPath || '', 'python', 'python.exe'),
+        path.join(execDir, 'resources', 'python', 'python.exe'),
+        path.join(execDir, 'python', 'python.exe')
+      ];
+      const bundledPython = bundledPythonCandidates.find(p => p && fs.existsSync(p));
+      const pythonCmd = bundledPython || findPythonPath();
       if (!pythonCmd || !fs.existsSync(pythonCmd)) {
         resolve({ success: false, error: 'Python not found. Please install Python 3.8+' });
         return;

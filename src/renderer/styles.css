@@ -63,6 +63,38 @@ body {
     z-index: 10000;
 }
 
+.view-exit {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    will-change: opacity, transform;
+}
+
+.view-exit.view-exit-active {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    transition: opacity 260ms ease-out, transform 260ms ease-out;
+}
+
+.view-enter {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    will-change: opacity, transform;
+}
+
+.view-enter.view-enter-active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 260ms ease-out, transform 260ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .view-exit.view-exit-active,
+    .view-enter.view-enter-active {
+        transition-duration: 1ms;
+        transform: none;
+    }
+}
+
 .splash-content {
     text-align: center;
     display: flex;
@@ -226,6 +258,148 @@ body {
     box-shadow: 0 8px 32px rgba(90, 74, 58, 0.3);
 }
 
+.provider-list {
+    border: 1px solid #D4C9B8;
+    background: #FFFFFF;
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.provider-option {
+    border: 1px solid #E0D5C7;
+    background: #F7F3ED;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 8px;
+}
+
+.provider-option:hover {
+    border-color: #8B7355;
+    box-shadow: 0 2px 8px rgba(90, 74, 58, 0.12);
+}
+
+.provider-option.selected {
+    border-color: #5A4A3A;
+    box-shadow: 0 2px 10px rgba(90, 74, 58, 0.18);
+}
+
+.provider-name {
+    display: block;
+    font-weight: 600;
+    color: #5A4A3A;
+}
+
+.provider-desc {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #6B6B6B;
+}
+
+.fine-tune-options,
+.fine-tune-strategies {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fine-tune-option,
+.fine-tune-strategy {
+    border: 1px solid #E0D5C7;
+    background: #F7F3ED;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fine-tune-option.selected,
+.fine-tune-strategy.selected {
+    border-color: #5A4A3A;
+    box-shadow: 0 2px 8px rgba(90, 74, 58, 0.18);
+}
+
+.fine-tune-path {
+    margin-top: 8px;
+    padding: 8px;
+    background: #FAF8F4;
+    border: 1px solid #E0D5C7;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #8B7355;
+    word-break: break-all;
+}
+
+.fine-tune-modal .login-modal-content {
+    border-radius: 12px;
+}
+
+.fine-tune-modal .login-header {
+    text-align: left;
+    border-bottom: 1px solid #E0D5C7;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.fine-tune-modal .login-subtitle {
+    color: #8B7355;
+}
+
+.fine-tune-modal .login-actions {
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.fine-tune-advanced {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #E0D5C7;
+    background: #FAF8F4;
+}
+
+.fine-tune-advanced-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.fine-tune-advanced-field .form-label {
+    margin-bottom: 6px;
+    display: block;
+}
+
+.fine-tune-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.fine-tune-metric {
+    padding: 10px;
+    border: 1px solid #E0D5C7;
+    background: #FAF8F4;
+}
+
+.fine-tune-metric .metric-label {
+    display: block;
+    font-size: 11px;
+    color: #8B7355;
+}
+
+.fine-tune-metric .metric-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #5A4A3A;
+}
+
 .login-header {
     text-align: center;
     margin-bottom: 20px;
@@ -346,6 +520,40 @@ body {
     flex: 1;
     transition: all 0.5s ease;
     overflow: hidden;
+}
+
+.top-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 6px 16px 0;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: flex-start;
+    border-bottom: 1px solid #E0D5C7;
+    background: #F7F3ED;
+    -webkit-app-region: no-drag;
+}
+
+.top-tab {
+    background: transparent;
+    border: none;
+    padding: 6px 6px;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    color: #6B5A4A;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.top-tab.active {
+    color: #5A4A3A;
+    border-bottom-color: #5A4A3A;
+    font-weight: 600;
+}
+
+.page-hidden {
+    display: none !important;
 }
 
 .left-panel {

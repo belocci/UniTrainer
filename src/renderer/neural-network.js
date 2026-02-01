@@ -57,6 +57,7 @@ class NeuralNetworkVisualization {
         this.useSubtleMovements = true;
         this.breathingAmplitude = 0.8;
         this.connectionFlowSpeed = 1.0;
+        this.maxConnectionsPerNode = 6;
         
         // Constants
         this.layersStartProgress = 0.0;
@@ -554,10 +555,13 @@ class NeuralNetworkVisualization {
         }
         
         if (!layerSizes || layerSizes.length < 2) {
-            layerSizes = [8, 12, 10, 8, 6];
+            layerSizes = [8, 12, 10, 8];
         }
         
-        layerSizes = layerSizes.map(size => Math.min(50, Math.max(2, size)));
+        // Keep the visualization lightweight
+        const maxLayers = 4;
+        const maxNodesPerLayer = 14;
+        layerSizes = layerSizes.slice(0, maxLayers).map(size => Math.min(maxNodesPerLayer, Math.max(2, size)));
         
         const layerCount = layerSizes.length;
         
@@ -665,10 +669,15 @@ class NeuralNetworkVisualization {
             // Create connections with aesthetic flow properties
             if (i < layerCount - 1) {
                 const nextLayer = layerSizes[i + 1];
+                const maxConnections = Math.min(nextLayer, this.maxConnectionsPerNode);
+                const connectionStep = Math.max(1, Math.ceil(nextLayer / maxConnections));
                 for (let j = 0; j < layer.length; j++) {
                     const node = layer[j];
                     const fromIndex = j;
                     for (let k = 0; k < nextLayer; k++) {
+                        if (k % connectionStep !== 0) {
+                            continue;
+                        }
                         const weight = (Math.random() - 0.5) * 2.0;
                         const weightMagnitude = Math.abs(weight);
                         
@@ -755,6 +764,8 @@ class NeuralNetworkVisualization {
                 } else {
                     node.averageIncomingWeight = 0.5;
                 }
+                node.connectionsIn = node.incomingWeights.length;
+                node.connectionsOut = node.outgoingWeights.length;
             }
         }
     }

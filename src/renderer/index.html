@@ -52,6 +52,31 @@ how a developer uses a compiler or IDE.
         </div>
     </div>
 
+    <!-- Cloud Provider Selector Modal -->
+    <div id="cloudProviderModal" class="login-modal">
+        <div class="login-modal-content">
+            <div class="login-header">
+                <h2 class="login-title">Select Cloud Provider</h2>
+                <p class="login-subtitle">Choose a provider to continue with cloud training</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label class="form-label">Provider</label>
+                    <div id="cloudProviderList" class="provider-list" role="listbox" aria-label="Cloud providers">
+                        <button class="provider-option selected" type="button" data-provider="canopywave" role="option" aria-selected="true">
+                            <span class="provider-name">CanopyWave</span>
+                            <span class="provider-desc">Default cloud GPU provider</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="login-actions">
+                    <button id="cancelProviderBtn" class="btn btn-ghost">Cancel</button>
+                    <button id="confirmProviderBtn" class="btn btn-primary">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CanopyWave Login Modal -->
     <div id="canopywaveLoginModal" class="login-modal">
         <div class="login-modal-content">
@@ -194,6 +219,11 @@ how a developer uses a compiler or IDE.
             </div>
             <button id="closeBtn" class="title-bar-btn close-btn" title="Close">×</button>
         </div>
+        <div class="top-tabs">
+            <button class="top-tab active" data-page="training">Training</button>
+            <button class="top-tab" data-page="inference">Inference</button>
+            <button class="top-tab" data-page="finetune">Fine-Tune</button>
+        </div>
         <div class="content-wrapper">
             <div class="left-panel">
             <header class="header">
@@ -202,7 +232,7 @@ how a developer uses a compiler or IDE.
             </header>
 
             <main class="main-content">
-                <div class="system-info card">
+                <div class="system-info card page-section" data-page="training">
                     <h2>System</h2>
                     <div class="info-grid">
                         <div class="info-item">
@@ -235,7 +265,7 @@ how a developer uses a compiler or IDE.
                 </div>
 
                 <!-- Cloud Training Configuration (shown when cloud mode is selected) -->
-                <div id="cloudConfigSection" class="card" style="display: none;">
+                <div id="cloudConfigSection" class="card page-section" data-page="training" style="display: none;">
                     <h2>Cloud Configuration</h2>
                     <div class="setting-group">
                         <div class="setting-header">
@@ -278,7 +308,7 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="data-section card">
+                <div class="data-section card page-section" data-page="training">
                     <h2>Training Data</h2>
                     <div style="margin-top: 12px;">
                         <button id="selectFolderBtn" class="btn btn-primary" style="width: 100%;">📂 Select Dataset Folder</button>
@@ -290,7 +320,7 @@ how a developer uses a compiler or IDE.
                 </div>
 
                 <!-- Tabular Schema Review Panel (only shown for tabular models) -->
-                <div class="schema-review-section card" id="schemaReviewSection" style="display: none;">
+                <div class="schema-review-section card page-section" id="schemaReviewSection" data-page="training" style="display: none;">
                     <h2>Schema Review</h2>
                     <div class="setting-description" style="margin-bottom: 16px;">Review and select columns for training. Uncheck columns you want to exclude.</div>
                     
@@ -337,7 +367,7 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="model-purpose-section card" id="modelPurposeSection" style="display: block;">
+                <div class="model-purpose-section card page-section" id="modelPurposeSection" data-page="training" style="display: block;">
                     <h2>Model Configuration</h2>
                     <div class="setting-group">
                         <div class="setting-header">
@@ -390,7 +420,7 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="settings-section card" id="settingsSection" style="display: block;">
+                <div class="settings-section card page-section" id="settingsSection" data-page="training" style="display: block;">
                     <h2>Training Settings</h2>
                     
                     <div class="settings-mode-toggle">
@@ -591,7 +621,7 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="training-section card">
+                <div class="training-section card page-section" data-page="training">
                     <h2>Training</h2>
                     <div class="controls">
                         <button id="testGpuBtn" class="btn">Test GPU</button>
@@ -606,7 +636,7 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="monitoring card">
+                <div class="monitoring card page-section" data-page="training">
                     <h2>Resources</h2>
                     <div class="monitor-grid">
                         <div class="monitor-item">
@@ -633,7 +663,7 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="model-section card" id="modelSection" style="display: none;">
+                <div class="model-section card page-section" id="modelSection" data-page="training" style="display: none;">
                     <h2>Saved Model</h2>
                     <div class="model-info">
                         <div class="model-path">
@@ -647,7 +677,44 @@ how a developer uses a compiler or IDE.
                     </div>
                 </div>
 
-                <div class="load-model-section card" id="loadModelSection">
+                <div class="model-section card page-section" id="fineTuneStartSection" data-page="finetune">
+                    <h2>Fine-Tune (CV)</h2>
+                    <div class="model-info">
+                        <div class="setting-description">Start a fine-tune run using your own dataset and a base detection model.</div>
+                        <div class="model-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button id="fineTuneStartPageBtn" class="btn btn-primary">Open Fine-Tune Wizard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-section card page-section" id="fineTuneResults" data-page="finetune" style="display: none;">
+                    <h2>Fine-Tune Results</h2>
+                    <div class="model-info">
+                        <div class="fine-tune-metrics">
+                            <div class="fine-tune-metric">
+                                <span class="metric-label">Before mAP50</span>
+                                <span id="fineTuneMap50Before" class="metric-value">-</span>
+                            </div>
+                            <div class="fine-tune-metric">
+                                <span class="metric-label">After mAP50</span>
+                                <span id="fineTuneMap50After" class="metric-value">-</span>
+                            </div>
+                            <div class="fine-tune-metric">
+                                <span class="metric-label">Before mAP50-95</span>
+                                <span id="fineTuneMap5095Before" class="metric-value">-</span>
+                            </div>
+                            <div class="fine-tune-metric">
+                                <span class="metric-label">After mAP50-95</span>
+                                <span id="fineTuneMap5095After" class="metric-value">-</span>
+                            </div>
+                        </div>
+                        <div class="model-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button id="fineTuneRunInferenceBtn" class="btn btn-primary">Run Inference</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="load-model-section card page-section" id="loadModelSection" data-page="training">
                     <h2>Load Model / Continue Training</h2>
                     <div class="model-browser">
                         <button id="refreshModelsBtn" class="btn" style="margin-bottom: 12px;">Refresh Model List</button>
@@ -658,7 +725,7 @@ how a developer uses a compiler or IDE.
                 </div>
 
                 <!-- CV Inference Section -->
-                <div class="inference-section card" id="cvInferenceSection" style="display: none;">
+                <div class="inference-section card page-section" id="cvInferenceSection" data-page="inference" style="display: none;">
                     <h2>🔍 CV Inference</h2>
                     <div class="setting-group">
                         <div class="setting-header">
@@ -711,7 +778,7 @@ how a developer uses a compiler or IDE.
                 </div>
 
                 <!-- Tabular Inference Section -->
-                <div class="inference-section card" id="tabularInferenceSection" style="display: none;">
+                <div class="inference-section card page-section" id="tabularInferenceSection" data-page="inference" style="display: none;">
                     <h2>🔍 Tabular Inference</h2>
                     <div class="setting-group">
                         <div class="setting-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -868,6 +935,82 @@ how a developer uses a compiler or IDE.
             <p id="loadingStatusText">Initializing model and verifying dataset...</p>
             <div class="loading-progress-bar">
                 <div class="loading-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fine-Tune Modal -->
+    <div id="fineTuneModal" class="login-modal fine-tune-modal">
+        <div class="login-modal-content" style="max-width: 760px;">
+            <div class="login-header">
+                <h2 class="login-title">Fine-Tune (CV)</h2>
+                <p class="login-subtitle">Adapt an existing detection model to your dataset</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label class="form-label">Step A: Select Base Model</label>
+                    <div class="fine-tune-options">
+                        <button type="button" class="fine-tune-option selected" data-source="unimodels">From Uni Trainer Models</button>
+                        <button type="button" class="fine-tune-option" data-source="import">Import Weights (.pt)</button>
+                    </div>
+                    <div id="fineTuneSourceUni" class="fine-tune-source">
+                        <select id="fineTuneModelSelect" class="setting-select">
+                            <option value="">Loading models...</option>
+                        </select>
+                    </div>
+                    <div id="fineTuneSourceImport" class="fine-tune-source" style="display: none;">
+                        <button id="fineTuneImportBtn" class="btn btn-primary" style="width: 100%;">Select .pt Weights</button>
+                        <div id="fineTuneImportPath" class="fine-tune-path" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Step B: Select Dataset</label>
+                    <button id="fineTuneDatasetBtn" class="btn btn-primary" style="width: 100%;">Select Dataset Folder</button>
+                    <div id="fineTuneDatasetPath" class="fine-tune-path" style="display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Step C: Fine-Tune Strategy</label>
+                    <div class="fine-tune-strategies">
+                        <button type="button" class="fine-tune-strategy selected" data-strategy="fast">Fast Adapt (Recommended)</button>
+                        <button type="button" class="fine-tune-strategy" data-strategy="balanced">Balanced</button>
+                        <button type="button" class="fine-tune-strategy" data-strategy="full">Full Fine-Tune</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button id="fineTuneAdvancedToggle" class="btn btn-ghost" type="button">Advanced Settings</button>
+                    <div id="fineTuneAdvanced" class="fine-tune-advanced" style="display: none;">
+                        <div class="fine-tune-advanced-grid">
+                            <div class="fine-tune-advanced-field">
+                                <label class="form-label">Epochs</label>
+                                <input id="fineTuneEpochs" type="number" class="form-input" min="1" value="30" />
+                            </div>
+                            <div class="fine-tune-advanced-field">
+                                <label class="form-label">Learning Rate</label>
+                                <input id="fineTuneLr" type="number" step="0.0001" class="form-input" value="0.001" />
+                            </div>
+                            <div class="fine-tune-advanced-field">
+                                <label class="form-label">Batch Size</label>
+                                <input id="fineTuneBatch" type="number" min="1" class="form-input" value="16" />
+                            </div>
+                            <div class="fine-tune-advanced-field">
+                                <label class="form-label">Image Size</label>
+                                <input id="fineTuneImgSize" type="number" min="320" class="form-input" value="640" />
+                            </div>
+                            <div class="fine-tune-advanced-field">
+                                <label class="form-label">Freeze Layers</label>
+                                <input id="fineTuneFreeze" type="number" min="0" class="form-input" value="10" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-actions">
+                    <button id="fineTuneCancelBtn" class="btn btn-ghost">Cancel</button>
+                    <button id="fineTuneStartBtn" class="btn btn-primary">Start Fine-Tune</button>
+                </div>
             </div>
         </div>
     </div>

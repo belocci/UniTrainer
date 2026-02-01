@@ -499,6 +499,157 @@ def train_yolo_model(config):
     return best_model, metrics
 
 
+def _extract_yolo_metrics(results):
+    if not results:
+        return {}
+    metrics_dict = getattr(results, "results_dict", {}) or {}
+    return {
+        "map50": float(metrics_dict.get("metrics/mAP50(B)", 0.0)),
+        "map5095": float(metrics_dict.get("metrics/mAP50-95(B)", 0.0)),
+        "precision": float(metrics_dict.get("metrics/precision(B)", 0.0)),
+        "recall": float(metrics_dict.get("metrics/recall(B)", 0.0))
+    }
+
+
+def _dataset_hash(data_yaml_path):
+    try:
+        import hashlib
+        with open(data_yaml_path, "rb") as f:
+            data = f.read()
+        return hashlib.sha256(data).hexdigest()
+    except Exception:
+        return "unknown"
+
+
+def train_yolo_finetune(config):
+    if not YOLO_AVAILABLE:
+        raise ImportError("ultralytics not installed. Install with: pip install ultralytics")
+
+    data_dir = config["data_dir"]
+    output_dir = config["output_dir"]
+    device = config.get("device", "auto")
+
+    base_model_source = config.get("base_model_source", "pretrained")
+    base_weights_path = config.get("base_weights_path")
+    pretrained_name = config.get("pretrained_name")
+
+    epochs = config.get("epochs", 30)
+    batch_size = config.get("batch_size", 16)
+    learning_rate = config.get("learning_rate", 0.001)
+    imgsz = config.get("imgsz", 640)
+    freeze_layers = config.get("freeze_layers", 0)
+
+    if base_model_source == "import" and base_weights_path:
+        base_model = base_weights_path
+    elif base_model_source == "unimodels" and base_weights_path:
+        base_model = base_weights_path
+    else:
+        base_model = pretrained_name or "yolov8n.pt"
+        if not base_model.endswith(".pt"):
+            base_model = f"{base_model}.pt"
+
+    send_log(f"[Fine-Tune] Base model: {base_model}")
+    send_log(f"[Fine-Tune] Strategy: {config.get('strategy', 'fast')}")
+    send_log(f"[Fine-Tune] Params: epochs={epochs}, lr={learning_rate}, batch={batch_size}, imgsz={imgsz}, freeze={freeze_layers}")
+
+    # Prepare dataset
+    data_yaml = prepare_yolo_dataset(data_dir)
+    dataset_hash = _dataset_hash(data_yaml)
+
+    # Determine device
+    if device == "auto":
+        train_device = 0 if torch.cuda.is_available() else 'cpu'
+    elif device == "cuda":
+        if torch.cuda.is_available():
+            train_device = 0
+        else:
+            send_log("Warning: CUDA/GPU requested but not available. Using CPU.", "warning")
+            train_device = 'cpu'
+    else:
+        train_device = 'cpu'
+
+    # Baseline evaluation
+    baseline_metrics = {}
+    try:
+        base_model_obj = YOLO(str(base_model))
+        baseline_results = base_model_obj.val(
+            data=str(data_yaml),
+            batch=batch_size,
+            imgsz=imgsz,
+            device=train_device
+        )
+        baseline_metrics = _extract_yolo_metrics(baseline_results)
+        send_log(f"[Fine-Tune] Baseline mAP50={baseline_metrics.get('map50', 0):.4f}, mAP50-95={baseline_metrics.get('map5095', 0):.4f}")
+    except Exception as e:
+        send_log(f"[Fine-Tune] Baseline evaluation failed: {e}", "warning")
+
+    # Train
+    model = YOLO(str(base_model))
+    send_progress(0, epochs, 1.0, 0.0, "starting")
+    results = model.train(
+        data=str(data_yaml),
+        epochs=epochs,
+        batch=batch_size,
+        imgsz=imgsz,
+        lr0=learning_rate,
+        device=train_device,
+        project=str(output_dir),
+        name="train",
+        freeze=freeze_layers,
+        verbose=True
+    )
+
+    best_model = Path(output_dir) / "train" / "weights" / "best.pt"
+
+    # Final evaluation
+    final_metrics = {}
+    try:
+        tuned_model = YOLO(str(best_model))
+        final_results = tuned_model.val(
+            data=str(data_yaml),
+            batch=batch_size,
+            imgsz=imgsz,
+            device=train_device
+        )
+        final_metrics = _extract_yolo_metrics(final_results)
+        send_log(f"[Fine-Tune] Final mAP50={final_metrics.get('map50', 0):.4f}, mAP50-95={final_metrics.get('map5095', 0):.4f}")
+    except Exception as e:
+        send_log(f"[Fine-Tune] Final evaluation failed: {e}", "warning")
+
+    # Save run config/metrics
+    os.makedirs(output_dir, exist_ok=True)
+    finetune_config = {
+        "base_model_source": base_model_source,
+        "base_model_id": config.get("base_model_id"),
+        "base_weights_path": base_weights_path,
+        "pretrained_name": pretrained_name,
+        "dataset_path": str(data_dir),
+        "dataset_hash": dataset_hash,
+        "strategy": config.get("strategy", "fast"),
+        "params": {
+            "freeze_layers": freeze_layers,
+            "epochs": epochs,
+            "learning_rate": learning_rate,
+            "batch_size": batch_size,
+            "imgsz": imgsz,
+            "device": device
+        },
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "app_version": config.get("app_version", "unknown"),
+        "baseline_metrics": baseline_metrics,
+        "final_metrics": final_metrics
+    }
+    with open(Path(output_dir) / "finetune_config.json", "w", encoding="utf-8") as f:
+        json.dump(finetune_config, f, indent=2)
+
+    metrics = {
+        "baseline": baseline_metrics,
+        "final": final_metrics
+    }
+
+    return best_model, metrics
+
+
 def train_sklearn_model(config):
     """Train scikit-learn model"""
     if not SKLEARN_AVAILABLE:
@@ -1667,7 +1818,10 @@ def main():
         
         # Route to appropriate trainer
         if model_purpose == "computer_vision" and framework == "yolo":
-            model_path, metrics = train_yolo_model(config)
+            if config.get("fine_tune"):
+                model_path, metrics = train_yolo_finetune(config)
+            else:
+                model_path, metrics = train_yolo_model(config)
         elif model_purpose == "machine_learning" and framework == "sklearn":
             model_path, metrics = train_sklearn_model(config)
         elif model_purpose == "machine_learning" and framework == "xgboost":

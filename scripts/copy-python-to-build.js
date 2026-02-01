@@ -11,6 +11,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const projectRoot = path.join(__dirname, '..');
 // Copy python folder to build directory
@@ -64,6 +65,24 @@ try {
   
   copyRecursiveSync(sourcePython, destPython);
   console.log('✓ Python folder copied successfully!');
+
+  const slimScript = path.join(__dirname, 'slim-python-runtime-win.js');
+  if (fs.existsSync(slimScript)) {
+    console.log('Slimming bundled Python runtime...');
+    execFileSync(
+      process.execPath,
+      [slimScript, destPython],
+      {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          PROJECT_ROOT: projectRoot
+        }
+      }
+    );
+  } else {
+    console.log('⚠ Slim script not found, skipping runtime slimming.');
+  }
 } catch (error) {
   console.error('✗ Error copying python folder:', error.message);
   console.log('⚠ Continuing build without bundled Python (app will use system Python)');
