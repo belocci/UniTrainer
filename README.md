@@ -1,5 +1,12 @@
 # Uni Trainer
 
+<img width="1200" height="798" alt="image" src="https://github.com/user-attachments/assets/07b271ca-e5a6-4575-b2a7-b4aa5ef9c430" />
+
+<img width="1199" height="797" alt="image" src="https://github.com/user-attachments/assets/03c71853-9acb-4118-a5ad-e67de435acdb" />
+
+<img width="1202" height="800" alt="image" src="https://github.com/user-attachments/assets/8038bffd-e9fa-421d-9928-2f31cf4618ac" />
+
+
 Train AI models locally or on cloud GPUs — without code, CLI friction, or environment headaches.
 
 Uni Trainer is a desktop-first AI training application that provides a modern GUI for training, fine-tuning, and inferencing Computer Vision, Tabular Machine Learning, and Small Language Models.
