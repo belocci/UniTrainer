@@ -108,7 +108,8 @@ Uni Trainer is built for **individual builders, small teams, and researchers** w
 - Consistent model and settings selectors  
 - Improved action hierarchy and visual clarity  
 - Polished training progress, logs, and feedback  
-- Tab-based navigation for training, inference, and fine-tuning  
+- Tab-based navigation for training, inference, and fine-tuning
+- Added advanced users checkbox, DEV's we are ready for you!
 
 This release focuses on **usability and workflow clarity**. Core training logic remains stable.
 
