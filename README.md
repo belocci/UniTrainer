@@ -1,4 +1,5 @@
-# Uni Trainer
+# Uni Trainer (OLD OPEN SOURCE VERSION) 
+#VISIT tryhala.xyz For new UNI TRAINER VERSION!
 
 <img width="1204" height="803" alt="image" src="https://github.com/user-attachments/assets/7c7fd6de-f5e9-4ddc-8121-80ca24c2a409" />
 
